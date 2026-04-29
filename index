@@ -98,15 +98,25 @@ const API_URL="https://script.google.com/macros/s/AKfycbzjhmnaRBi_5m5q4_7U2blbtn
 let data=[],index=0,showName=false,showTask=false;
 
 /* LOAD DATA */
-fetch(API_URL)
-.then(r=>r.json())
-.then(r=>{
-  data=r;
-  render();
-})
-.catch(err=>{
-  document.getElementById("app").innerHTML="❌ Gagal load data";
-});
+async function load(){
+  try{
+    let res = await fetch(API_URL);
+    let json = await res.json();
+
+    // handle kalau GAS kirim error
+    if(json.status==="error"){
+      document.getElementById("app").innerHTML="❌ "+json.message;
+      return;
+    }
+
+    data=json;
+    render();
+
+  }catch(e){
+    document.getElementById("app").innerHTML="❌ Gagal koneksi";
+  }
+}
+load();
 
 /* UTIL */
 function now(){return new Date().toISOString();}
@@ -118,42 +128,42 @@ function initials(name){
 return name.split(" ").map(x=>x[0]).join("").toUpperCase();
 }
 
-/* COPY EFFECT */
-function copyEffect(el){
+/* COPY */
+function copyRow(text,el){
+navigator.clipboard.writeText(text);
 let old=el.innerText;
 el.innerText="✔";
 setTimeout(()=>el.innerText=old,1000);
 }
 
-/* COPY */
-function copyRow(text,el){
-navigator.clipboard.writeText(text);
-copyEffect(el);
-}
-
 /* UPDATE */
-function toggleDone(nip){
+async function toggleDone(nip){
 let t=now();
 
-// update UI dulu
+// update UI langsung
 data[index].terakhir = t;
 render();
 
-// kirim ke GAS (FIX PENTING)
-fetch(API_URL,{
+try{
+let res = await fetch(API_URL,{
   method:"POST",
-  headers:{
-    "Content-Type":"application/json"
-  },
+  headers:{ "Content-Type":"application/json" },
   body:JSON.stringify({
     nip:nip,
     tanggal:t,
     password:"timawakng"
   })
-})
-.then(r=>r.json())
-.then(res=>console.log("Server:",res))
-.catch(err=>console.error("Error:",err));
+});
+
+let json = await res.json();
+
+if(json.status!=="success"){
+  alert("❌ "+json.message);
+}
+
+}catch(err){
+alert("❌ Gagal kirim ke server");
+}
 }
 
 /* REKAP */
