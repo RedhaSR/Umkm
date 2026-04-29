@@ -93,7 +93,7 @@ td,th{padding:8px;border-bottom:1px solid #eee}
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbxG0FKrZoBILNdKAt11JIKj64nSQpjJuHFTEONFgymRdUNCnKhS6re3vPqA4Jt-0FXt-w/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbzjhmnaRBi_5m5q4_7U2blbtnqRVR0kAvsJfKymz4MFTstznp8bKmnOs2iKVxAgMshlCg/exec";
 
 let data=[],index=0,showName=false,showTask=false;
 
