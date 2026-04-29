@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;font-family:system-ui}
+body{margin:0;background:#f4f6fb;padding:12px}
+
+.container{max-width:900px;margin:auto}
+
+/* TOP */
+.top{display:flex;gap:8px;margin-bottom:12px}
+.top a{
+  flex:1;text-align:center;padding:12px;border-radius:10px;
+  color:#fff;text-decoration:none;font-weight:600;
+}
+.top a:nth-child(1){background:#4facfe;}
+.top a:nth-child(2){background:#43e97b;}
+.top a:nth-child(3){background:#f093fb;}
+
+/* REKAP */
+.btn-rekap{
+  width:100%;padding:12px;border:none;border-radius:10px;
+  background:#222;color:#fff;margin-bottom:10px;
+  cursor:pointer;font-weight:600;
+}
+
+/* CARD */
+.card{
+  background:#fff;border-radius:14px;padding:16px;
+  box-shadow:0 6px 15px rgba(0,0,0,.06);
+}
+
+/* NAME */
+.name{
+  text-align:center;
+  font-size:18px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* ROW */
+.row{
+  padding:12px;border-radius:8px;
+  background:#f1f3f8;
+  margin-top:10px;
+  cursor:pointer;
+  text-align:center;
+  font-weight:600;
+}
+
+/* STATUS */
+.status{
+  margin-top:14px;padding:12px;border-radius:10px;
+  text-align:center;font-weight:600;cursor:pointer;
+  background:#43e97b;color:#fff;
+}
+.today{background:#b388ff !important}
+
+/* TABLE */
+table{width:100%;font-size:14px}
+td,th{padding:8px;border-bottom:1px solid #eee}
+.row-today{background:#ede7f6}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="top">
+  <a href="https://aktivitas.kalbarprov.go.id//engine/feature26/data-kinerja/add#TakeOff" target="_blank">INPUT</a>
+  <a href="https://epresensi.kalbarprov.go.id/login-general" target="_blank">JADWAL</a>
+  <a href="https://script.google.com/macros/s/AKfycbwl9sC1tabi_-BC6vU2KFH1drCGPHwgmgIqNFks_ipCSxFCjH1NyxITPodOC4CWJwjJYQ/exec" target="_blank">SUKET</a>
+</div>
+
+<button class="btn-rekap" onclick="toggleRekap()">📊 REKAP</button>
+
+<div id="rekapBox" style="display:none"></div>
+<div id="app"></div>
+
+</div>
+
+<script>
+
+/* ======================
+   DATA (DECOY)
+====================== */
+let data = [
+  {no:1, nama:"Riko Saputra", nip:"19800101", password:"123456"},
+  {no:2, nama:"Andi Wijaya", nip:"19800202", password:"abcdef"},
+  {no:3, nama:"Siti Rahma", nip:"19800303", password:"qwerty"}
+];
+
+let index = 0;
+let showName = false;
+
+/* ======================
+   UTIL
+====================== */
+function todayOnly(){
+  return new Date().toISOString().split("T")[0];
+}
+
+function format(t){
+  return t ? new Date(t).toLocaleString("id-ID") : "-";
+}
+
+function initials(name){
+  return name.split(" ").map(x=>x[0]).join("").toUpperCase();
+}
+
+/* ======================
+   LOCAL STORAGE
+====================== */
+function getLast(nip){
+  return localStorage.getItem("last_"+nip);
+}
+
+function setLast(nip){
+  let t = new Date().toISOString();
+  localStorage.setItem("last_"+nip, t);
+}
+
+/* ======================
+   COPY
+====================== */
+function copyRow(text, el){
+  navigator.clipboard.writeText(text);
+  let old = el.innerText;
+  el.innerText = "✔️";
+  setTimeout(()=>el.innerText = old,1000);
+}
+
+/* ======================
+   STATUS
+====================== */
+function toggleDone(nip){
+  setLast(nip);
+  render();
+}
+
+/* ======================
+   REKAP + NAVIGASI
+====================== */
+function toggleRekap(){
+  let box = document.getElementById("rekapBox");
+  box.style.display = box.style.display==="block"?"none":"block";
+  renderRekap();
+}
+
+function renderRekap(){
+  document.getElementById("rekapBox").innerHTML = `
+  <div class="card">
+  <table>
+  <tr><th>No</th><th>Nama</th><th>Status</th></tr>
+  ${data.map(d=>{
+    let t = getLast(d.nip);
+    let isToday = t && t.startsWith(todayOnly());
+
+    return `
+    <tr onclick="goTo('${d.nama}')" class="${isToday?'row-today':''}">
+      <td>${d.no}</td>
+      <td>${d.nama}</td>
+      <td>${format(t)}</td>
+    </tr>`;
+  }).join("")}
+  </table>
+  </div>`;
+}
+
+function goTo(nama){
+  index = data.findIndex(d=>d.nama===nama);
+  document.getElementById("rekapBox").style.display="none";
+  render();
+}
+
+/* ======================
+   RENDER
+====================== */
+function render(){
+  let d = data[index];
+  let t = getLast(d.nip);
+  let isToday = t && t.startsWith(todayOnly());
+
+  document.getElementById("app").innerHTML = `
+  <div class="card">
+
+    <div class="name" onclick="showName=!showName;render()">
+      ${showName ? d.nama : initials(d.nama)}
+    </div>
+
+    <div class="row" onclick="copyRow('${d.nip}',this)">
+      NIP *
+    </div>
+
+    <div class="row" onclick="copyRow('${d.password}',this)">
+      PASSWORD *
+    </div>
+
+    <div class="status ${isToday?'today':''}" onclick="toggleDone('${d.nip}')">
+      ${t ? "Terakhir Input<br>"+format(t) : "Klik untuk input hari ini"}
+    </div>
+
+  </div>`;
+}
+
+/* INIT */
+render();
+
+</script>
+
+</body>
+</html>
