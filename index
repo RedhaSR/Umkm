@@ -7,7 +7,6 @@
 <style>
 *{box-sizing:border-box;font-family:system-ui}
 body{margin:0;background:#f4f6fb;padding:12px}
-
 .container{max-width:900px;margin:auto}
 
 /* TOP */
@@ -73,7 +72,6 @@ cursor:pointer;
 table{width:100%;font-size:14px}
 td,th{padding:8px;border-bottom:1px solid #eee}
 .row-today{background:#ede7f6}
-
 </style>
 </head>
 
@@ -90,7 +88,7 @@ td,th{padding:8px;border-bottom:1px solid #eee}
 <button class="btn-rekap" onclick="toggleRekap()">📊 REKAP</button>
 
 <div id="rekapBox" style="display:none"></div>
-<div id="app"></div>
+<div id="app">Loading...</div>
 
 </div>
 
@@ -99,10 +97,15 @@ const API_URL="https://script.google.com/macros/s/AKfycbxG0FKrZoBILNdKAt11JIKj64
 
 let data=[],index=0,showName=false,showTask=false;
 
-/* LOAD */
-fetch(API_URL).then(r=>r.json()).then(r=>{
-data=r;
-render();
+/* LOAD DATA */
+fetch(API_URL)
+.then(r=>r.json())
+.then(r=>{
+  data=r;
+  render();
+})
+.catch(err=>{
+  document.getElementById("app").innerHTML="❌ Gagal load data";
 });
 
 /* UTIL */
@@ -128,19 +131,29 @@ navigator.clipboard.writeText(text);
 copyEffect(el);
 }
 
-/* UPDATE (REALTIME UI) */
+/* UPDATE */
 function toggleDone(nip){
 let t=now();
 
-// update UI langsung
+// update UI dulu
 data[index].terakhir = t;
 render();
 
-// kirim ke server
+// kirim ke GAS (FIX PENTING)
 fetch(API_URL,{
-method:"POST",
-body:JSON.stringify({nip:nip,tanggal:t,password:"timawakng"})
-});
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json"
+  },
+  body:JSON.stringify({
+    nip:nip,
+    tanggal:t,
+    password:"timawakng"
+  })
+})
+.then(r=>r.json())
+.then(res=>console.log("Server:",res))
+.catch(err=>console.error("Error:",err));
 }
 
 /* REKAP */
@@ -151,13 +164,16 @@ renderRekap();
 }
 
 function renderRekap(){
+if(!data.length)return;
+
 document.getElementById("rekapBox").innerHTML=`
 <div class="card">
 <table>
 <tr><th>No</th><th>Nama</th><th>Status</th></tr>
 ${data.map(d=>{
 let t=d.terakhir;
-let isToday=t && t.startsWith(todayOnly());
+let isToday=t && new Date(t).toISOString().split("T")[0]===todayOnly();
+
 return `
 <tr onclick="goTo('${d.nama}')" class="${isToday?'row-today':''}">
 <td>${d.no}</td>
@@ -177,9 +193,14 @@ render();
 
 /* RENDER */
 function render(){
+if(!data.length){
+document.getElementById("app").innerHTML="Tidak ada data";
+return;
+}
+
 let d=data[index];
 let t=d.terakhir;
-let isToday=t && t.startsWith(todayOnly());
+let isToday=t && new Date(t).toISOString().split("T")[0]===todayOnly();
 
 document.getElementById("app").innerHTML=`
 <div class="card">
@@ -197,7 +218,7 @@ PASSWORD ***
 </div>
 
 <div class="status ${isToday?'today':''}" onclick="toggleDone('${d.nip}')">
-${t? "Terakhir Input\n"+format(t) : "Klik untuk input hari ini"}
+${t? "Terakhir Input<br>"+format(t) : "Klik untuk input hari ini"}
 </div>
 
 <div class="task-title" onclick="showTask=!showTask;render()">
