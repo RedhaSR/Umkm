@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0b5a3b">
-<title>Panel Input Kinerja Harian</title>
+<title>UMKM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -173,6 +173,38 @@ main{margin-top:-52px;padding:0 16px}
 }
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
+
+/* ===== LAYAR LEBAR (PC / laptop): dua kolom, rekap selalu tampil ===== */
+@media (min-width:900px){
+  .hero{padding:26px 40px 96px}
+  .hero .wrap,main.wrap{max-width:1240px}
+  .hero h1{font-size:22px}
+  .brand img{width:68px;height:68px}
+  main.wrap{
+    padding:0 40px;display:grid;gap:18px 28px;align-items:start;
+    grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+    grid-template-areas:"links rekap" "progress rekap" "card rekap";
+  }
+  .links{grid-area:links}
+  .progress{grid-area:progress;margin-top:0}
+  .card{grid-area:card;margin-top:0}
+  .link{flex-direction:row;justify-content:center;padding:16px;font-size:14px}
+  .name{font-size:22px}
+  .person{padding:26px 24px 10px}
+  .fields{padding:14px 24px 6px}
+  .status{padding:14px 24px 22px}
+  .overlay{grid-area:rekap;position:static;display:block;background:none;z-index:auto}
+  .overlay .sheet{
+    max-width:none;border-radius:var(--r);box-shadow:var(--shadow);animation:none;
+    height:calc(100vh - 190px);min-height:440px;
+  }
+  #closeRekap,#openRekap{display:none}
+  .sheet ul{padding-bottom:10px}
+}
+@media (min-width:1500px){
+  .hero .wrap,main.wrap{max-width:1400px}
+}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -219,7 +251,6 @@ main{margin-top:-52px;padding:0 16px}
   </section>
 
   <section class="card" id="app"></section>
-</main>
 
 <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="rekapTitle">
   <div class="sheet">
@@ -232,6 +263,7 @@ main{margin-top:-52px;padding:0 16px}
     <ul id="rekapList"></ul>
   </div>
 </div>
+</main>
 
 <div class="toast" id="toast" role="status"></div>
 
@@ -360,6 +392,7 @@ function render(){
   $("fNip").onclick = e => copyField(e.currentTarget, d.nip, "NIP");
   $("fPw").onclick  = e => copyField(e.currentTarget, d.password, "Kata sandi");
   renderProgress();
+  renderRekap();
 }
 
 /* ======================
